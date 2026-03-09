@@ -1,34 +1,36 @@
 .movie-management-page {
   min-height: 100vh;
-  background-color: #0a0a0a;
-  color: #ffffff;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  padding-top: 4rem;
 }
 
 .content-management {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: var(--space-xl);
 }
 
 .content-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: var(--space-xl);
+  padding-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--accent-blue);
 }
 
 .content-title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-md);
 }
 
 .search-form {
@@ -36,16 +38,24 @@
 }
 
 .search-input {
-  padding: 0.5rem 1rem;
-  background-color: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  color: #ffffff;
-  width: 200px;
+  padding: var(--space-sm) var(--space-md);
+  background-color: rgba(74, 158, 255, 0.08);
+  border: 1px solid var(--accent-blue);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  width: 250px;
+  font-size: var(--fs-sm);
+  transition: all var(--transition-base);
+}
+
+.search-input:focus {
+  outline: none;
+  background-color: rgba(74, 158, 255, 0.12);
+  border-color: var(--accent-blue);
 }
 
 .search-input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-muted);
 }
 
 .user-icon {

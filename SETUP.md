@@ -2,8 +2,8 @@
 
 ## Yêu Cầu Hệ Thống
 - Node.js (v18 hoặc cao hơn)
-- Yarn package manager
-- PostgreSQL (v12 hoặc cao hơn)
+- Yarn/NPM package manager
+- MySQL (qua XAMPP hoặc standalone)
 
 ## Các Lệnh Cài Đặt
 
@@ -14,29 +14,42 @@
 cd server
 
 # Cài đặt dependencies
-yarn install
+npm install
 
 # Tạo file .env từ template
 cp env.example .env
 
-# Chỉnh sửa file .env với thông tin database và JWT secrets của bạn
-# Sử dụng editor để chỉnh sửa: nano .env hoặc vim .env
+# Chỉnh sỚ file .env với thông tin database và JWT secrets của bạn
+# Sử dụng editor để chỉnh sỚ: notepad .env hoặc code .env (VS Code)
 ```
 
 ### 2. Cài Đặt Database
 
+#### Option A: Sử dụng XAMPP (Windows/Mac/Linux)
 ```bash
-# Tạo database PostgreSQL
-createdb booking_movie_ticket
+# 1. Mở XAMPP Control Panel, start MySQL
+# 2. Mở phpMyAdmin (http://localhost/phpmyadmin)
+# 3. Tạo database: booking_movie_ticket
+# 4. Chạy migration
+cd server
+npm run migrate
+```
 
-# Hoặc sử dụng psql
-psql -U postgres
+#### Option B: Sử dụng MySQL Command Line
+```bash
+# Bật MySQL service trước
+# Windows: net start MySQL80 (hoặc MySQL57, tùy version)
+# Mac: brew services start mysql
+# Linux: sudo systemctl start mysql
+
+# Tạo database
+mysql -u root -p
 CREATE DATABASE booking_movie_ticket;
-\q
+exit
 
 # Chạy migration để tạo các bảng
 cd server
-yarn migrate
+npm run migrate
 ```
 
 ### 3. Cài Đặt App
@@ -54,7 +67,7 @@ yarn install
 ### Chạy Server (Terminal 1)
 ```bash
 cd server
-yarn dev
+npm run dev
 ```
 Server sẽ chạy tại: http://localhost:5000
 
@@ -71,11 +84,16 @@ Sau khi tạo database, bạn cần cập nhật file `.env` trong thư mục `s
 
 ```env
 DB_HOST=localhost
-DB_PORT=5432
+DB_PORT=3306
 DB_NAME=booking_movie_ticket
-DB_USER=postgres
-DB_PASSWORD=your_postgres_password
+DB_USER=root
+DB_PASSWORD=
 ```
+
+**Lưu ý:**
+- `DB_PORT`: 3306 là port mặc định MySQL
+- `DB_USER`: root là user mặc định XAMPP
+- `DB_PASSWORD`: Để trống nếu XAMPP mặc định, hoặc nhập mật khẩu nếu đã set
 
 ## Cấu Hình JWT Secrets
 
@@ -99,15 +117,26 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ## Troubleshooting
 
 ### Lỗi kết nối database
-- Kiểm tra PostgreSQL đã chạy chưa: `sudo systemctl status postgresql`
-- Kiểm tra thông tin trong file `.env`
-- Kiểm tra user postgres có quyền tạo database
+- Kiểm tra MySQL đã chạy chưa (XAMPP hoặc `mysql --version`)
+- Kiểm tra thông tin DB_HOST, DB_PORT, DB_USER, DB_PASSWORD trong file `.env`
+- Kiểm tra database `booking_movie_ticket` đã được tạo chưa
+```bash
+mysql -u root -p -e "SHOW DATABASES;"
+```
 
-### Lỗi port đã được sử dụng
-- Thay đổi PORT trong file `.env` (server)
-- Hoặc thay đổi port trong `vite.config.ts` (app)
+### Lỗi port 3306 đã được sử dụng
+- MySQL đang chạy 2 instance, hoặc port đã được dùng
+- Thay đổi DB_PORT trong file `.env` (ví dụ: 3307)
+- Hoặc tắt MySQL instance kia
 
 ### Lỗi migration
-- Đảm bảo database đã được tạo
-- Kiểm tra quyền của user postgres
-- Xóa và tạo lại database nếu cần: `dropdb booking_movie_ticket && createdb booking_movie_ticket`
+- Đảm bảo MySQL đã chạy
+- Đảm bảo database `booking_movie_ticket` đã được tạo
+- Xem lỗi chi tiết: `npm run migrate` (sẽ print error message)
+- Xóa và tạo lại database nếu cần:
+```bash
+mysql -u root -p
+DROP DATABASE booking_movie_ticket;
+CREATE DATABASE booking_movie_ticket;
+exit
+```

@@ -9,6 +9,7 @@ export interface Movie {
   main_cast: string;
   description: string;
   poster_url?: string;
+  image_url?: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -23,6 +24,7 @@ export interface MovieCreate {
   main_cast: string;
   description: string;
   poster_url?: string;
+  image_url?: string;
 }
 
 export interface MovieUpdate extends Partial<MovieCreate> {
@@ -40,6 +42,7 @@ export interface MoviePublic {
   main_cast: string;
   description: string;
   poster_url?: string;
+  image_url?: string;
   created_at: Date;
   updated_at: Date;
 }

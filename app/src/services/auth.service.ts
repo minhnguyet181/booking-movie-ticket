@@ -68,7 +68,8 @@ export const authService = {
   },
 
   async logout(): Promise<void> {
-    await api.post('/auth/logout');
+    const refreshToken = localStorage.getItem('refreshToken');
+    await api.post('/auth/logout', { refreshToken });
   },
 
   async getCurrentUser(): Promise<User> {

@@ -9,6 +9,7 @@ export interface Movie {
   main_cast: string;
   description: string;
   poster_url?: string;
+  image_url?: string;
   created_at: string;
   updated_at: string;
 }
@@ -23,6 +24,7 @@ export interface MovieCreate {
   main_cast: string;
   description: string;
   poster_url?: string;
+  image_url?: string;
 }
 
 export interface MoviesResponse {

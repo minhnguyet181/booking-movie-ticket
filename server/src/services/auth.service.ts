@@ -1,7 +1,9 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import pool from '../config/database';
 import { User, UserCreate, UserPublic } from '../models/User';
+import { UserRepository } from '../repositories/user.repository';
+import { RefreshTokenRepository } from '../repositories/refreshToken.repository';
+import { PasswordResetTokenRepository } from '../repositories/passwordResetToken.repository';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
@@ -50,45 +52,33 @@ export class AuthService {
 
   // Register user
   static async register(userData: UserCreate): Promise<UserPublic> {
-    const { username, email, password, full_name, phone } = userData;
+    const { username, email, password } = userData;
 
     // Check if user already exists
-    const existingUser = await pool.query(
-      'SELECT id FROM users WHERE username = $1 OR email = $2',
-      [username, email]
-    );
-
-    if (existingUser.rows.length > 0) {
+    const exists = await UserRepository.exists(username, email);
+    if (exists) {
       throw new Error('Username or email already exists');
     }
 
     // Hash password
     const hashedPassword = await this.hashPassword(password);
 
-    // Insert user
-    const result = await pool.query(
-      `INSERT INTO users (username, email, password, full_name, phone, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-       RETURNING id, username, email, full_name, phone, created_at`,
-      [username, email, hashedPassword, full_name || null, phone || null]
-    );
+    // Create user
+    const user = await UserRepository.create({
+      ...userData,
+      password: hashedPassword
+    });
 
-    return result.rows[0];
+    return user;
   }
 
   // Login user
   static async login(username: string, password: string): Promise<{ user: UserPublic; token: string; refreshToken: string }> {
     // Find user
-    const result = await pool.query(
-      'SELECT * FROM users WHERE username = $1 OR email = $1',
-      [username]
-    );
-
-    if (result.rows.length === 0) {
+    const user = await UserRepository.findByUsernameOrEmail(username);
+    if (!user) {
       throw new Error('Invalid credentials');
     }
-
-    const user = result.rows[0] as User;
 
     // Verify password
     const isPasswordValid = await this.comparePassword(password, user.password);
@@ -101,10 +91,9 @@ export class AuthService {
     const refreshToken = this.generateRefreshToken(user.id, user.username);
 
     // Store refresh token in database
-    await pool.query(
-      'INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, NOW() + INTERVAL \'30 days\')',
-      [user.id, refreshToken]
-    );
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+    await RefreshTokenRepository.create(user.id, refreshToken, expiresAt);
 
     // Return user without password
     const { password: _, ...userPublic } = user;
@@ -118,19 +107,13 @@ export class AuthService {
   // Logout user - xóa refresh token
   static async logout(refreshToken: string): Promise<void> {
     if (refreshToken) {
-      await pool.query(
-        'DELETE FROM refresh_tokens WHERE token = $1',
-        [refreshToken]
-      );
+      await RefreshTokenRepository.deleteByToken(refreshToken);
     }
   }
 
   // Logout all sessions - xóa tất cả refresh tokens của user
   static async logoutAll(userId: number): Promise<void> {
-    await pool.query(
-      'DELETE FROM refresh_tokens WHERE user_id = $1',
-      [userId]
-    );
+    await RefreshTokenRepository.deleteByUserId(userId);
   }
 
   // Refresh token
@@ -139,12 +122,8 @@ export class AuthService {
     const decoded = this.verifyRefreshToken(refreshToken) as { userId: number; username: string };
 
     // Check if refresh token exists in database
-    const tokenResult = await pool.query(
-      'SELECT * FROM refresh_tokens WHERE token = $1 AND expires_at > NOW()',
-      [refreshToken]
-    );
-
-    if (tokenResult.rows.length === 0) {
+    const tokenData = await RefreshTokenRepository.findByToken(refreshToken);
+    if (!tokenData) {
       throw new Error('Invalid refresh token');
     }
 
@@ -153,10 +132,9 @@ export class AuthService {
     const newRefreshToken = this.generateRefreshToken(decoded.userId, decoded.username);
 
     // Update refresh token in database
-    await pool.query(
-      'UPDATE refresh_tokens SET token = $1, expires_at = NOW() + INTERVAL \'30 days\' WHERE token = $2',
-      [newRefreshToken, refreshToken]
-    );
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+    await RefreshTokenRepository.updateToken(refreshToken, newRefreshToken, expiresAt);
 
     return {
       token: newToken,
@@ -166,29 +144,29 @@ export class AuthService {
 
   // Forgot password - generate reset token
   static async forgotPassword(email: string): Promise<string> {
-    const result = await pool.query(
-      'SELECT id FROM users WHERE email = $1',
+    const [users] = await pool.execute(
+      'SELECT id FROM users WHERE email = ?',
       [email]
-    );
+    ) as any[];
 
-    if (result.rows.length === 0) {
+    if (users.length === 0) {
       // Don't reveal if email exists for security
       return 'If the email exists, a reset link has been sent.';
     }
 
-    const userId = result.rows[0].id;
+    const userId = users[0].id;
     const resetToken = jwt.sign(
       { userId, type: 'password-reset' },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
 
-    // Store reset token
-    await pool.query(
+    // Store reset token (MySQL uses INSERT ... ON DUPLICATE KEY UPDATE)
+    await pool.execute(
       `INSERT INTO password_reset_tokens (user_id, token, expires_at)
-       VALUES ($1, $2, NOW() + INTERVAL '1 hour')
-       ON CONFLICT (user_id) DO UPDATE SET token = $2, expires_at = NOW() + INTERVAL '1 hour'`,
-      [userId, resetToken]
+       VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 HOUR))
+       ON DUPLICATE KEY UPDATE token = ?, expires_at = DATE_ADD(NOW(), INTERVAL 1 HOUR)`,
+      [userId, resetToken, resetToken]
     );
 
     return resetToken;
@@ -204,44 +182,29 @@ export class AuthService {
     }
 
     // Check if token exists and is valid
-    const tokenResult = await pool.query(
-      'SELECT * FROM password_reset_tokens WHERE token = $1 AND expires_at > NOW()',
-      [token]
-    );
-
-    if (tokenResult.rows.length === 0) {
+    const tokenData = await PasswordResetTokenRepository.findByToken(token);
+    if (!tokenData) {
       throw new Error('Invalid or expired reset token');
     }
-
-    const userId = tokenResult.rows[0].user_id;
 
     // Hash new password
     const hashedPassword = await this.hashPassword(newPassword);
 
     // Update password
-    await pool.query(
-      'UPDATE users SET password = $1, updated_at = NOW() WHERE id = $2',
-      [hashedPassword, userId]
-    );
+    await UserRepository.update(tokenData.user_id, { password: hashedPassword });
 
     // Delete reset token
-    await pool.query(
-      'DELETE FROM password_reset_tokens WHERE token = $1',
-      [token]
-    );
+    await PasswordResetTokenRepository.deleteByToken(token);
   }
 
   // Get user by ID
   static async getUserById(userId: number): Promise<UserPublic | null> {
-    const result = await pool.query(
-      'SELECT id, username, email, full_name, phone, created_at FROM users WHERE id = $1',
-      [userId]
-    );
-
-    if (result.rows.length === 0) {
+    const user = await UserRepository.findById(userId);
+    if (!user) {
       return null;
     }
 
-    return result.rows[0] as UserPublic;
+    const { password, ...userPublic } = user;
+    return userPublic as UserPublic;
   }
 }

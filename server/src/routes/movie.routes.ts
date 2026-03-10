@@ -1,7 +1,8 @@
 import express from 'express';
 import { body, query, validationResult } from 'express-validator';
-import { MovieService } from '../services/movie.service';
-import { authenticate, AuthRequest } from '../middleware/auth.middleware';
+import { MovieController } from '../controllers/movie.controller';
+import { authenticate } from '../middleware/auth.middleware';
+import { requireAdmin } from '../middleware/admin.middleware';
 
 const router = express.Router();
 
@@ -14,7 +15,7 @@ const validate = (req: express.Request, res: express.Response, next: express.Nex
   next();
 };
 
-// Get all movies with pagination
+// Get all movies with pagination (public)
 router.get(
   '/',
   [
@@ -23,51 +24,17 @@ router.get(
     query('search').optional().isString().withMessage('Search must be a string'),
   ],
   validate,
-  async (req, res, next) => {
-    try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const search = req.query.search as string;
-
-      let result;
-      if (search) {
-        result = await MovieService.searchMovies(search, page, limit);
-      } else {
-        result = await MovieService.getAllMovies(page, limit);
-      }
-
-      res.json(result);
-    } catch (error: any) {
-      next(error);
-    }
-  }
+  MovieController.getAllMovies
 );
 
-// Get movie by ID
-router.get('/:id', async (req, res, next) => {
-  try {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      res.status(400).json({ error: 'Invalid movie ID' });
-      return;
-    }
+// Get movie by ID (public)
+router.get('/:id', MovieController.getMovieById);
 
-    const movie = await MovieService.getMovieById(id);
-    if (!movie) {
-      res.status(404).json({ error: 'Movie not found' });
-      return;
-    }
-
-    res.json({ movie });
-  } catch (error: any) {
-    next(error);
-  }
-});
-
-// Create movie (requires authentication)
+// Create movie (admin only)
 router.post(
   '/',
   authenticate,
+  requireAdmin,
   [
     body('name').trim().notEmpty().withMessage('Movie name is required'),
     body('country').trim().notEmpty().withMessage('Country is required'),
@@ -78,22 +45,17 @@ router.post(
     body('main_cast').trim().notEmpty().withMessage('Main cast is required'),
     body('description').trim().notEmpty().withMessage('Description is required'),
     body('poster_url').optional().isURL().withMessage('Poster URL must be a valid URL'),
+    body('image_url').optional().isURL().withMessage('Image URL must be a valid URL'),
   ],
   validate,
-  async (req: AuthRequest, res, next) => {
-    try {
-      const movie = await MovieService.createMovie(req.body);
-      res.status(201).json({ message: 'Movie created successfully', movie });
-    } catch (error: any) {
-      next(error);
-    }
-  }
+  MovieController.createMovie
 );
 
-// Update movie (requires authentication)
+// Update movie (admin only)
 router.put(
   '/:id',
   authenticate,
+  requireAdmin,
   [
     body('name').optional().trim().notEmpty().withMessage('Movie name cannot be empty'),
     body('country').optional().trim().notEmpty().withMessage('Country cannot be empty'),
@@ -104,38 +66,13 @@ router.put(
     body('main_cast').optional().trim().notEmpty().withMessage('Main cast cannot be empty'),
     body('description').optional().trim().notEmpty().withMessage('Description cannot be empty'),
     body('poster_url').optional().isURL().withMessage('Poster URL must be a valid URL'),
+    body('image_url').optional().isURL().withMessage('Image URL must be a valid URL'),
   ],
   validate,
-  async (req: AuthRequest, res, next) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        res.status(400).json({ error: 'Invalid movie ID' });
-        return;
-      }
-
-      const movie = await MovieService.updateMovie(id, req.body);
-      res.json({ message: 'Movie updated successfully', movie });
-    } catch (error: any) {
-      next(error);
-    }
-  }
+  MovieController.updateMovie
 );
 
-// Delete movie (requires authentication)
-router.delete('/:id', authenticate, async (req: AuthRequest, res, next) => {
-  try {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      res.status(400).json({ error: 'Invalid movie ID' });
-      return;
-    }
-
-    await MovieService.deleteMovie(id);
-    res.json({ message: 'Movie deleted successfully' });
-  } catch (error: any) {
-    next(error);
-  }
-});
+// Delete movie (admin only)
+router.delete('/:id', authenticate, requireAdmin, MovieController.deleteMovie);
 
 export default router;

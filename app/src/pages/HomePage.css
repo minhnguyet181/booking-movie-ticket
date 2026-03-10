@@ -26,14 +26,3 @@
   background-repeat: no-repeat;
   position: relative;
 }
-
-.movie-poster::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(8, 16, 31, 0.5) 0%,
-    rgba(13, 31, 53, 0.4) 100%
-  );
-}

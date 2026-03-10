@@ -1,3 +1,5 @@
+export type UserRole = 'user' | 'admin';
+
 export interface User {
   id: number;
   username: string;
@@ -5,6 +7,7 @@ export interface User {
   password: string;
   full_name?: string;
   phone?: string;
+  role: UserRole;
   created_at: Date;
   updated_at: Date;
 }
@@ -15,6 +18,7 @@ export interface UserCreate {
   password: string;
   full_name?: string;
   phone?: string;
+  role?: UserRole;
 }
 
 export interface UserPublic {
@@ -23,5 +27,6 @@ export interface UserPublic {
   email: string;
   full_name?: string;
   phone?: string;
+  role: UserRole;
   created_at: Date;
 }

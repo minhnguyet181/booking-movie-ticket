@@ -1,15 +1,13 @@
 .header {
-  background-color: var(--primary-dark);
+  background-color: #1A4C7A;
   padding: var(--space-md) var(--space-lg);
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 1000;
-  backdrop-filter: blur(10px);
   width: 100%;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 0 16px rgba(74, 158, 255, 0.1);
-  border-bottom: 1px solid rgba(74, 158, 255, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .header-container {
@@ -25,7 +23,7 @@
   font-family: var(--font-display);
   font-size: 1.75rem;
   font-weight: var(--fw-bold);
-  color: var(--text-primary);
+  color: #ffffff;
   text-decoration: none;
   letter-spacing: 1px;
 }
@@ -38,13 +36,14 @@
 }
 
 .nav-link {
-  color: var(--text-primary);
+  color: #ffffff;
   text-decoration: none;
-  font-weight: var(--fw-medium);
-  font-size: var(--fs-sm);
-  letter-spacing: 0.5px;
+  font-weight: var(--fw-normal);
+  font-size: var(--fs-base);
+  letter-spacing: 0.3px;
   transition: color var(--transition-base);
   position: relative;
+  font-family: var(--font-primary);
 }
 
 .nav-link::after {
@@ -54,12 +53,12 @@
   left: 0;
   width: 0;
   height: 2px;
-  background-color: var(--accent-blue);
+  background-color: #ffffff;
   transition: width var(--transition-base);
 }
 
 .nav-link:hover {
-  color: var(--accent-blue);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .nav-link:hover::after {
@@ -74,14 +73,25 @@
 
 .search-bar {
   position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  right: 12px;
+  width: 16px;
+  height: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  pointer-events: none;
 }
 
 .search-input {
   padding: var(--space-sm) var(--space-md);
-  background-color: rgba(74, 158, 255, 0.08);
-  border: 1px solid rgba(74, 158, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: var(--radius-full);
-  color: var(--text-primary);
+  color: #ffffff;
   font-size: var(--fs-sm);
   width: 200px;
   transition: all var(--transition-base);
@@ -89,12 +99,12 @@
 
 .search-input:focus {
   outline: none;
-  background-color: rgba(74, 158, 255, 0.12);
-  border-color: var(--accent-blue);
+  background-color: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .search-input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .user-menu {
@@ -102,23 +112,32 @@
 }
 
 .login-btn {
-  padding: var(--space-sm) var(--space-lg);
-  background-color: var(--accent-gold);
-  color: var(--bg-dark);
-  border: none;
-  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+  background-color: transparent;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-full);
   cursor: pointer;
-  font-weight: var(--fw-semibold);
-  font-size: var(--fs-sm);
+  font-weight: var(--fw-normal);
+  font-size: var(--fs-base);
   transition: all var(--transition-base);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
 }
 
 .login-btn:hover {
-  background-color: #e5c158;
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.05);
+}
+
+.account-icon {
+  width: 20px;
+  height: 20px;
+  stroke: #ffffff;
 }
 
 .user-dropdown {
@@ -129,21 +148,22 @@
   width: 40px;
   height: 40px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--accent-blue), var(--accent-gold));
-  color: var(--bg-dark);
-  border: 2px solid rgba(74, 158, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   cursor: pointer;
-  font-weight: var(--fw-bold);
+  font-weight: var(--fw-semibold);
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all var(--transition-base);
-  font-size: var(--fs-lg);
+  font-size: var(--fs-base);
 }
 
 .user-icon:hover {
   transform: scale(1.05);
-  box-shadow: 0 4px 16px rgba(74, 158, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .dropdown-menu {

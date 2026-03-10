@@ -6,9 +6,11 @@ interface ModalProps {
   onClose: () => void;
   children: ReactNode;
   title?: string;
+  contentClassName?: string;
+  overlayClassName?: string;
 }
 
-const Modal = ({ isOpen, onClose, children, title }: ModalProps) => {
+const Modal = ({ isOpen, onClose, children, title, contentClassName, overlayClassName }: ModalProps) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -23,9 +25,30 @@ const Modal = ({ isOpen, onClose, children, title }: ModalProps) => {
 
   if (!isOpen) return null;
 
+  const handleOverlayMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Close only when interacting directly with backdrop and block click-through.
+    if (e.target === e.currentTarget) {
+      e.preventDefault();
+      e.stopPropagation();
+      onClose();
+    }
+  };
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+    <div
+      className={`modal-overlay ${overlayClassName || ''}`.trim()}
+      onMouseDown={handleOverlayMouseDown}
+      onClick={(e) => {
+        // Keep backdrop from forwarding click events to content behind it.
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+    >
+      <div
+        className={`modal-content ${contentClassName || ''}`.trim()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
           {title && <h2 className="modal-title">{title}</h2>}
           <button className="modal-close" onClick={onClose}>

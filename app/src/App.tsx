@@ -3,11 +3,13 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import HomePage from './pages/HomePage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import MovieManagementPage from './pages/MovieManagementPage';
+import MovieFormPage from './pages/MovieFormPage';
 import './App.css';
 
 function App() {
@@ -22,10 +24,34 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route
+              path="/admin-dashboard"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/manage-movies"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="admin">
                   <MovieManagementPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/manage-movies/add"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <MovieFormPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/manage-movies/edit/:movieId"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <MovieFormPage />
                 </ProtectedRoute>
               }
             />

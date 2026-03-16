@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { User, LoginResponse, RegisterData } from '../types/auth';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -33,7 +33,7 @@ api.interceptors.response.use(
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
           const response = await axios.post(
-            `${API_URL}/auth/refresh`,
+            `${API_URL}/refresh`,
             { refreshToken },
             { withCredentials: true }
           );
@@ -59,30 +59,30 @@ api.interceptors.response.use(
 
 export const authService = {
   async login(username: string, password: string): Promise<LoginResponse> {
-    const response = await api.post('/auth/login', { username, password });
+    const response = await api.post('/login', { username, password });
     return response.data;
   },
 
   async register(data: RegisterData): Promise<void> {
-    await api.post('/auth/register', data);
+    await api.post('/register', data);
   },
 
   async logout(): Promise<void> {
     const refreshToken = localStorage.getItem('refreshToken');
-    await api.post('/auth/logout', { refreshToken });
+    await api.post('/logout', { refreshToken });
   },
 
   async getCurrentUser(): Promise<User> {
-    const response = await api.get('/auth/me');
+    const response = await api.get('/me');
     return response.data.user;
   },
 
   async forgotPassword(email: string): Promise<{ message: string; resetToken?: string }> {
-    const response = await api.post('/auth/forgot-password', { email });
+    const response = await api.post('/forgot-password', { email });
     return response.data;
   },
 
   async resetPassword(token: string, password: string, confirmPassword: string): Promise<void> {
-    await api.post('/auth/reset-password', { token, password, confirmPassword });
+    await api.post('/reset-password', { token, password, confirmPassword });
   },
 };

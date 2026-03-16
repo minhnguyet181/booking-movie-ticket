@@ -21,8 +21,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/movies', movieRoutes);
+app.use('/', authRoutes);
+app.use('/movies', movieRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
